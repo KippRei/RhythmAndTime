@@ -8,24 +8,25 @@ public class Timing : MonoBehaviour
 {
     [SerializeField] Text counterText = null;
     [SerializeField] Text timingText = null;
-    [SerializeField] Music music;
-    // Need to change names of Enemy and Player class
-    [SerializeField] Enemy enemy;
-    [SerializeField] Player player;
+
     // For BPM and sync
-    [Range(90.0f, 200.0f)] [SerializeField] float beat = 120f;
+    [SerializeField] public float beat = 120f;
     [SerializeField] float subDiv = 1f;
     [SerializeField] float visualOffset = 0;
     [SerializeField] float musicOffset = 0;
-    int count = 0;
+    [SerializeField] float playerOffset = 0;
+
     // Song time used for timing
-    float startTime = 0;
-    float curTime = 0;
-    float lastTime = 0;
+    Music music;
+    double startTime = 0;
+    public double curTime = 0;
+    public double lastTime = 0;
+
     // Timing Windows
-    float perfectTiming = .024f;
-    float goodTiming = .038f;
-    float okTiming = .064f;
+    float perfectTiming = .050f;
+    float goodTiming = .067f;
+    float okTiming = .084f;
+
     // Keys for Input 
     char inputKey;
 
@@ -37,11 +38,14 @@ public class Timing : MonoBehaviour
     // For reading charts
     char[] buffer;
     int chartLength = 0;
+    int count = 0;
+
     // For notes and movement
     public Note note;
     Vector3 right = new Vector3(4.515f, 6, -1);
     Vector3 left = new Vector3(-4.515f, 6, -1);
     Vector3 middle = new Vector3(0, 6, -1);
+
     // To hold creation time of notes. Compare creation to current (against beat) to calculate accuracy.
     public Queue<Note> leftNoteQ = new Queue<Note>();
     public Queue<Note> rightNoteQ = new Queue<Note>();
@@ -49,93 +53,97 @@ public class Timing : MonoBehaviour
 
     // Click sound
     AudioSource audioSource;
-
+    public AudioClip tap;
 
     // Start is called before the first frame update
     void Start()
-    { 
+    {
+        music = GameObject.Find("Music").GetComponent<Music>();
         leftTarget = GameObject.Find("Left");
         rightTarget = GameObject.Find("Right");
         middleTarget = GameObject.Find("Middle");
         audioSource = GetComponent<AudioSource>();
-        using (StreamReader sr = new StreamReader(@"F:\repos\unity2d\RhythmAndTime\Assets\Charts\test.txt"))
+        using (StreamReader sr = new StreamReader(@"F:\GitRepos\RhythmAndTime\Assets\Charts\test.txt"))
         {
             chartLength = (int)sr.BaseStream.Length;
             buffer = new char[chartLength];
             sr.Read(buffer, 0, chartLength);
         }
-        startTime = music.musicSource.time;
-        lastTime = startTime;
+        startTime = music.songPos;
+        lastTime = startTime + musicOffset;
         beat = 60 / beat;
-        beat /= subDiv;
     }
 
     // Update is called once per frame
     void Update()
     {
-        curTime = music.musicSource.time;
+        curTime = music.songPos;
         if (curTime - lastTime >= beat)
         {
-            //audioSource.Play();
-
+            //audioSource.PlayOneShot(tap);
+            lastTime += beat;
             if (count == chartLength) { count = 0; }
             char chartCount = buffer[count];
             counterText.text = chartCount.ToString();
-            if ((chartCount - 48) == 0)
-            {
-                CreateLeftNote(curTime);
-            }
             if ((chartCount - 48) == 1)
             {
-                CreateRightNote(curTime);
+                CreateLeftNote(lastTime);
             }
             if ((chartCount - 48) == 2)
             {
-                CreateMiddleNote(curTime);
+                CreateMiddleNote(lastTime);
             }
-
-            lastTime += beat;
+            if ((chartCount - 48) == 3)
+            {
+                CreateRightNote(lastTime);
+            }            
             count++;
         }
 
         // Middle Input ("M")
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            //Debug.Log("Middle Hit: " + music.musicSource.time);
-            timingText.text = CheckTiming(middleNoteQ);
+            audioSource.Play();
+            Debug.Log("Middle Hit: " + (curTime + playerOffset));
+            timingText.text = CheckTiming(middleNoteQ, curTime + playerOffset);
         }
 
         // Left Input ("L")
         if (Input.GetKeyDown(KeyCode.F))
         {
-            //Debug.Log("Left Hit: " + music.musicSource.time);
-            timingText.text = CheckTiming(leftNoteQ);
+            audioSource.Play();
+            Debug.Log("Left Hit: " + (curTime + playerOffset));
+            timingText.text = CheckTiming(leftNoteQ, curTime + playerOffset);
         }
 
         // Right Input ("R")
         if (Input.GetKeyDown(KeyCode.J))
         {
-            //Debug.Log("Right Hit: " + music.musicSource.time);
-            timingText.text = CheckTiming(rightNoteQ);
+            audioSource.Play();
+            Debug.Log("Right Hit: " + (curTime + playerOffset));
+            timingText.text = CheckTiming(rightNoteQ, curTime + playerOffset);
         }
     }
 
-    /// TODO: change lstTime variable name
-    // Gets current time of button pressed and lastTime var from Update.
     // Calculates difference and compares it to target timing
-    string CheckTiming(Queue<Note> noteQ)
+    string CheckTiming(Queue<Note> noteQ, double hit)
     {
         if (noteQ.Count != 0)
         {
-            float target = noteQ.Peek().GetTime() + beat;
-            //Debug.Log("Target:" + target);
-            float hit = music.musicSource.time;
+            double target = noteQ.Peek().GetTime();
+            Debug.Log("Target:" + target);
 
-            if (hit < target + perfectTiming && hit > target - perfectTiming)
+            if (hit > target - perfectTiming && hit <= target)
             {
                 //display perfect
                 noteQ.Peek().DestroyNote();
-                return "Perfect!";
+                return "Perfect! (early)";
+            }
+            else if (hit < target + perfectTiming && hit > target)
+            {
+                //display perfect
+                noteQ.Peek().DestroyNote();
+                return "Perfect! (late)";
             }
             else if (hit < target + goodTiming && hit > target - goodTiming)
             {
@@ -153,51 +161,58 @@ public class Timing : MonoBehaviour
         return "";
     }
 
-    // TODO: why does beat/2 cause notes to sync up better than beat?
-    void CreateLeftNote(float time)
+    void CreateLeftNote(double myTime)
     {
         Note thisNote = Instantiate<Note>(note, left, Quaternion.identity);
         leftNoteQ.Enqueue(thisNote);
         float distanceToHit = thisNote.transform.position.y - leftTarget.transform.position.y;
-        float scrollTime = distanceToHit / (beat);
-        StartCoroutine(ScrollNote(thisNote, time, scrollTime, leftNoteQ));
+        float scroll = (distanceToHit + visualOffset) / (4 * beat);
+        StartCoroutine(ScrollNote(thisNote, myTime, scroll, leftNoteQ));
     }
 
-    void CreateRightNote(float time)
+    void CreateRightNote(double myTime)
     {
         Note thisNote = Instantiate<Note>(note, right, Quaternion.identity);
         rightNoteQ.Enqueue(thisNote);
-        float distanceToHit = thisNote.transform.position.y - leftTarget.transform.position.y;
-        float scrollTime = distanceToHit / (beat);
-        StartCoroutine(ScrollNote(thisNote, time, scrollTime, rightNoteQ));
+        float distanceToHit = thisNote.transform.position.y - rightTarget.transform.position.y;
+        float scroll = (distanceToHit + visualOffset) / (4 * beat);
+        StartCoroutine(ScrollNote(thisNote, myTime, scroll, rightNoteQ));
     }
 
-    void CreateMiddleNote(float time)
+    void CreateMiddleNote(double myTime)
     {
         Note thisNote = Instantiate<Note>(note, middle, Quaternion.identity);
         middleNoteQ.Enqueue(thisNote);
-        float distanceToHit = thisNote.transform.position.y - leftTarget.transform.position.y;
-        float scrollTime = distanceToHit / (beat);
-        StartCoroutine(ScrollNote(thisNote, time, scrollTime, middleNoteQ));
+        float distanceToHit = thisNote.transform.position.y - middleTarget.transform.position.y;
+        float scroll = (distanceToHit + visualOffset) / (4 * beat);
+        StartCoroutine(ScrollNote(thisNote, myTime, scroll, middleNoteQ));
     }
 
-    IEnumerator ScrollNote(Note thisNote, float time, float scrollTime, Queue<Note>noteQ)
+    IEnumerator ScrollNote(Note thisNote, double noteTime, double myScroll, Queue<Note>noteQ)
     {
         Vector3 thisPos = thisNote.transform.position;
+        double timeOffset = music.songPos - noteTime;
+        thisPos.y -= (float)(timeOffset * myScroll);
+        thisNote.transform.position = thisPos;
         while (thisNote != null)
         {
             if (thisNote!=null)
             {
-                thisPos.y -= Time.smoothDeltaTime * scrollTime;
+                thisPos.y -= (float)(Time.smoothDeltaTime * myScroll);
                 thisNote.transform.position = thisPos;
-                if (thisNote.transform.position.y < middleTarget.transform.position.y - 1)
+                /*if (thisNote.transform.position.y < middleTarget.transform.position.y - 1)
                 {
-                    timingText.text = "Miss...";
-                }
-                yield return null;
+                    //timingText.text = "Miss...";
+                }*/
             }
+            yield return null;
         }
         noteQ.Dequeue();
         yield return null;
+    }
+
+    void Ping()
+    {
+        audioSource.PlayOneShot(tap);
     }
 }

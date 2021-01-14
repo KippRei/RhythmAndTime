@@ -319,13 +319,16 @@ MonoBehaviour:
   counterText: {fileID: 1444419342}
   timingText: {fileID: 1774250791}
   beat: 175
-  subDiv: 1
+  noteSpeed: 4
   visualOffset: -1.2
   musicOffset: 0
   playerOffset: -0.174
   curTime: 0
   lastTime: 0
   note: {fileID: 7229869807703515441, guid: 52c0d14e2f1db2d479ffa11a0383b175, type: 3}
+  right: {x: 4.515, y: 6, z: -1}
+  left: {x: -4.515, y: 6, z: -1}
+  middle: {x: 0, y: 6, z: -1}
   tap: {fileID: 8300000, guid: 2f5db8cdaafd1ee4089460287516271f, type: 3}
 --- !u!82 &397349875
 AudioSource:
@@ -1092,6 +1095,36 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 821ef254a1f971344a4ade632d0d7361, type: 3}
+--- !u!1 &2037760835
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2037760836}
+  m_Layer: 0
+  m_Name: Track
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2037760836
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2037760835}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.76, z: -2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 9
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &7829603760335910659
 PrefabInstance:
   m_ObjectHideFlags: 0

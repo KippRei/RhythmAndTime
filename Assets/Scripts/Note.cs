@@ -18,7 +18,7 @@ public class Note: MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         music = GameObject.Find("Music").GetComponent<Music>();
         timing = GameObject.Find("HitTiming").GetComponent<Timing>();
-        scrollTime = (4 * timing.beat);
+        scrollTime = (timing.noteSpeed * timing.beat);
         noteTime = timing.lastTime;
     }
 
@@ -36,7 +36,18 @@ public class Note: MonoBehaviour
     {
         if (collision.name.ToString() == "Offscreen")
         {
-            DestroyNote();
+            if (transform.position.x == timing.left.x)
+            {
+                DestroyNote(timing.leftNoteQ);
+            }
+            else if (transform.position.x == timing.middle.x)
+            {
+                DestroyNote(timing.middleNoteQ);
+            }
+            else if (transform.position.x == timing.right.x)
+            {
+                DestroyNote(timing.rightNoteQ);
+            }
         }
     }
 
@@ -53,8 +64,9 @@ public class Note: MonoBehaviour
         return noteTime + scrollTime;
     }
 
-    public void DestroyNote()
+    public void DestroyNote(Queue<Note>noteQ)
     {
+        noteQ.Dequeue();
         Destroy(gameObject);
     }
 }

@@ -17,6 +17,7 @@ public class Music : MonoBehaviour
         musicSource = GetComponent<AudioSource>();
         musicSource.Play();
         songStart = AudioSettings.dspTime;
+        songPos = AudioSettings.dspTime - songStart - offset;
     }
 
     private void Update()

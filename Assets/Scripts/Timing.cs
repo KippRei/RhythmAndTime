@@ -29,11 +29,15 @@ public class Timing : MonoBehaviour
 
     // Keys for Input 
     char inputKey;
+    int numOfKeysPressed = 0;
 
     // Hit Indicators
     GameObject leftTarget;
     GameObject rightTarget;
     GameObject middleTarget;
+
+    // Player
+    GameObject player;
 
     // For reading charts
     Queue<string> beatChart = new Queue<string>(); // Parse each line from sr buffer into beatChart as a string for easier chart interpretation
@@ -65,6 +69,7 @@ public class Timing : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        player = GameObject.Find("Player");
         music = GameObject.Find("Music").GetComponent<Music>();
         track = GameObject.Find("Track");
         leftTarget = GameObject.Find("Left");
@@ -84,6 +89,8 @@ public class Timing : MonoBehaviour
         beat = 60 / beat;
         scrollSpeed = (middle.y - middleTarget.transform.position.y + visualOffset) / (beat * noteSpeed); // TODO: Fix: hard-coded 4 (notes take 4 beats to scroll down screen) for testing
         subDiv = GetSubDiv() / 4; // TODO: Fix this: GetSubDiv() returns how many notes in measure not how many notes per beat
+        audioSource.Play();
+        audioSource.Pause();
     }
 
     // Update is called once per frame
@@ -92,36 +99,47 @@ public class Timing : MonoBehaviour
         MoveTrack();
         SpawnNotes();
         CheckInput();
+        Debug.Log(numOfKeysPressed);
     }
 
     private void CheckInput()
-    {
+    {        
+        if (Input.GetKeyDown(KeyCode.F) || Input.GetKeyDown(KeyCode.J))
+        {
+            numOfKeysPressed++;
+        }
+
         // Middle Input ("M")
         if (Input.GetKeyDown(KeyCode.Space))
-        {
-            StartCoroutine(TargetHitAnim(middleTarget));
-            //audioSource.Play();
+        {            
+            //StartCoroutine(TargetHitAnim(middleTarget));
             Debug.Log("Middle Hit: " + (curTime + playerOffset));
             timingText.text = CheckTiming(middleNoteQ, curTime + playerOffset);
         }
 
         // Left Input ("L")
-        if (Input.GetKeyDown(KeyCode.F))
+        if (Input.GetKey(KeyCode.F))
         {
-            StartCoroutine(TargetHitAnim(leftTarget));
-            //audioSource.Play();
+            player.transform.position = leftTarget.transform.position;
+           // StartCoroutine(TargetHitAnim(leftTarget));
             Debug.Log("Left Hit: " + (curTime + playerOffset));
             timingText.text = CheckTiming(leftNoteQ, curTime + playerOffset);
         }
 
         // Right Input ("R")
-        if (Input.GetKeyDown(KeyCode.J))
+        if (Input.GetKey(KeyCode.J))
         {
-            StartCoroutine(TargetHitAnim(rightTarget));
-            //audioSource.Play();
+            player.transform.position = rightTarget.transform.position;
+            //StartCoroutine(TargetHitAnim(rightTarget));
             Debug.Log("Right Hit: " + (curTime + playerOffset));
             timingText.text = CheckTiming(rightNoteQ, curTime + playerOffset);
         }
+
+        if (Input.GetKeyUp(KeyCode.F) || Input.GetKeyUp(KeyCode.J))
+        {
+            numOfKeysPressed--;
+            player.transform.position = middleTarget.transform.position;
+        }        
     }
 
     IEnumerator TargetHitAnim(GameObject target)
@@ -243,9 +261,6 @@ public class Timing : MonoBehaviour
         Note thisNote = Instantiate<Note>(note, left, Quaternion.identity);
         leftNoteQ.Enqueue(thisNote);
         thisNote.transform.parent = track.transform;
-        //float distanceToHit = thisNote.transform.position.y - leftTarget.transform.position.y;
-        //float scroll = (distanceToHit + visualOffset) / (4 * beat);
-        //StartCoroutine(ScrollNote(thisNote, myTime, scroll, leftNoteQ));
     }
 
     void CreateRightNote(double myTime)
@@ -253,9 +268,6 @@ public class Timing : MonoBehaviour
         Note thisNote = Instantiate<Note>(note, right, Quaternion.identity);
         rightNoteQ.Enqueue(thisNote);
         thisNote.transform.parent = track.transform;
-        //float distanceToHit = thisNote.transform.position.y - rightTarget.transform.position.y;
-        //float scroll = (distanceToHit + visualOffset) / (4 * beat);
-        //StartCoroutine(ScrollNote(thisNote, myTime, scroll, rightNoteQ));
     }
 
     void CreateMiddleNote(double myTime)
@@ -263,31 +275,5 @@ public class Timing : MonoBehaviour
         Note thisNote = Instantiate<Note>(note, middle, Quaternion.identity);
         middleNoteQ.Enqueue(thisNote);
         thisNote.transform.parent = track.transform;
-        //float distanceToHit = thisNote.transform.position.y - middleTarget.transform.position.y;
-        //float scroll = (distanceToHit + visualOffset) / (4 * beat);
-        //StartCoroutine(ScrollNote(thisNote, myTime, scroll, middleNoteQ));
-    }
-
-    IEnumerator ScrollNote(Note thisNote, double noteTime, double myScroll, Queue<Note>noteQ)
-    {
-        Vector3 thisPos = thisNote.transform.position;
-        double timeOffset = music.songPos - noteTime;
-        thisPos.y -= (float)(timeOffset * myScroll);
-        thisNote.transform.position = thisPos;
-        while (thisNote != null)
-        {
-            if (thisNote!=null)
-            {
-                thisPos.y -= (float)(Time.smoothDeltaTime * myScroll);
-                thisNote.transform.position = thisPos;
-                /*if (thisNote.transform.position.y < middleTarget.transform.position.y - 1)
-                {
-                    //timingText.text = "Miss...";
-                }*/
-            }
-            yield return null;
-        }
-        noteQ.Dequeue();
-        yield return null;
     }
 }

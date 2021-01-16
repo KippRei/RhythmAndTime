@@ -55,9 +55,12 @@
     <Compile Include="Assets\Scripts\Music.cs" />
     <Compile Include="Assets\Scripts\Timing.cs" />
     <Compile Include="Assets\Scripts\Enemy.cs" />
+    <Compile Include="Assets\Scripts\Note.cs" />
     <Compile Include="Assets\Scripts\Player.cs" />
     <Compile Include="Assets\Scripts\Character.cs" />
-    <Compile Include="Assets\Scripts\Note.cs" />
+    <Compile Include="Assets\Scripts\PlayerPosition.cs" />
+    <Compile Include="Assets\Scripts\MNote.cs" />
+    <Compile Include="Assets\Scripts\BNote.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\Charts\test.txt" />

@@ -7,7 +7,7 @@ public class Note: MonoBehaviour
     Music music;
     AudioSource audioSource;
     public AudioClip tap;
-    Timing timing;
+    protected Timing timing;
     public double noteTime;
     double scrollTime;
     bool played = false;
@@ -18,23 +18,23 @@ public class Note: MonoBehaviour
         audioSource = GetComponent<AudioSource>();
         music = GameObject.Find("Music").GetComponent<Music>();
         timing = GameObject.Find("HitTiming").GetComponent<Timing>();
-        scrollTime = (timing.noteSpeed * timing.beat);
+        scrollTime = (4 * timing.beat);
         noteTime = timing.lastTime;
     }
 
     private void Update()
     {
-        currentTime = timing.curTime;
-        if (noteTime + scrollTime <= currentTime && played == false)
-        {
-            //audioSource.PlayOneShot(tap);
-            played = true;
-        }
+        //currentTime = timing.curTime;
+        //if (noteTime + scrollTime <= currentTime && played == false)
+        //{
+        //    //audioSource.PlayOneShot(tap);
+        //    played = true;
+        //}
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    protected virtual void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.name.ToString() == "Offscreen")
+         if (collision.name.ToString() == "Offscreen")
         {
             if (transform.position.x == timing.left.x)
             {
@@ -47,6 +47,10 @@ public class Note: MonoBehaviour
             else if (transform.position.x == timing.right.x)
             {
                 DestroyNote(timing.rightNoteQ);
+            }
+            else if (transform.position.x == timing.beatLocation.x)
+            {
+                DestroyNote(timing.beatNoteQ);
             }
         }
     }
